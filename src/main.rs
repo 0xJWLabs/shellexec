@@ -26,7 +26,11 @@ fn display_message_box(message: &str, err: Option<bool>) {
             HWND(std::ptr::null_mut()),
             PCSTR(format!("{}\0", message).as_ptr()),
             PCSTR(format!("{} v{}\0", NAME, VERSION).as_ptr()),
-            if err.unwrap_or(true) { MB_ICONERROR | MB_OK } else { MB_OK }, // Combine both flags
+            if err.unwrap_or(true) {
+                MB_ICONERROR | MB_OK
+            } else {
+                MB_OK
+            }, // Combine both flags
         );
     }
 }
@@ -35,8 +39,9 @@ fn display_usage() {
     let usage = format!(
         "Usage: {} <command> [arguments]\n\n\
         Example:\n\
-        {} pwsh -Command echo Hello, World!"
-    , NAME, NAME);
+        {} pwsh -Command echo Hello, World!",
+        NAME, NAME
+    );
     display_message_box(&usage, None);
 }
 
@@ -44,7 +49,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        display_usage(); 
+        display_usage();
         exit(1);
     }
 

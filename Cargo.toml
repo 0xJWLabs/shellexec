@@ -1,16 +1,9 @@
 [package]
 name = "shellexec"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
-build = "build.rs"
-
-[dependencies]
-shadow-rs = "0.35.2"
 
 [dependencies.windows]
 version = "0.58.0"
-features = ["Win32_System_Com", "implement", "Win32_System_Threading", "Wdk_System_Threading", "Win32_Security", "Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Foundation_Numerics"]
-shadow-rs = "0.35.2"
-
-[build-dependencies]
+features = ["Win32_System_Threading", "Win32_Security", "Win32_Foundation", "Win32_UI_WindowsAndMessaging"]
 shadow-rs = "0.35.2"

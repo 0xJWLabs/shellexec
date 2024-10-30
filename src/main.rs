@@ -2,7 +2,6 @@
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
-use shadow_rs::shadow;
 use std::env;
 use std::process::exit;
 
@@ -18,26 +17,39 @@ use windows::{
     },
 };
 
-shadow!(build);
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const NAME: &str = env!("CARGO_PKG_NAME");
+
+fn display_message_box(message: &str, err: Option<bool>) {
+    unsafe {
+        MessageBoxA(
+            HWND(std::ptr::null_mut()),
+            PCSTR(format!("{}\0", message).as_ptr()),
+            PCSTR(format!("{} v{}\0", NAME, VERSION).as_ptr()),
+            if err.unwrap_or(true) { MB_ICONERROR | MB_OK } else { MB_OK }, // Combine both flags
+        );
+    }
+}
+
+fn display_usage() {
+    let usage = format!(
+        "Usage: {} <command> [arguments]\n\n\
+        Example:\n\
+        {} pwsh -Command echo Hello, World!"
+    , NAME, NAME);
+    display_message_box(&usage, None);
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        let message = "Usage: <command> [arguments]";
-        let title = "Error";
-        unsafe {
-            MessageBoxA(
-                HWND(std::ptr::null_mut()),
-                PCSTR(message.as_ptr()),
-                PCSTR(title.as_ptr()),
-                MB_OK | MB_ICONERROR,
-            );
-        }
+        display_usage(); 
         exit(1);
     }
 
     let command = &args[1];
+
     let parameters: String = args[2..].join(" ");
     let mut full_command = format!("{} {}", command, parameters);
 
@@ -70,30 +82,14 @@ fn main() {
             if wait_result == WAIT_FAILED {
                 let error_code = unsafe { GetLastError().0 };
                 let error_msg = format!("WaitForSingleObject failed: {}", error_code);
-                let title = "Error";
-                unsafe {
-                    MessageBoxA(
-                        HWND(std::ptr::null_mut()),
-                        PCSTR(error_msg.as_ptr()),
-                        PCSTR(title.as_ptr()),
-                        MB_OK | MB_ICONERROR,
-                    );
-                }
+                display_message_box(&error_msg, None);
                 exit(1);
             }
         }
         Err(_) => {
             let error_code = unsafe { GetLastError().0 };
             let error_msg = format!("CreateProcess failed: {}", error_code);
-            let title = "Error";
-            unsafe {
-                MessageBoxA(
-                    HWND(std::ptr::null_mut()),
-                    PCSTR(error_msg.as_ptr()),
-                    PCSTR(title.as_ptr()),
-                    MB_OK | MB_ICONERROR,
-                );
-            }
+            display_message_box(&error_msg, None);
             exit(1);
         }
     }
@@ -101,24 +97,12 @@ fn main() {
     unsafe {
         if let Err(e) = CloseHandle(pi.hProcess) {
             let error_msg = format!("Failed to close process handle: {:?}", e);
-            let title = "Error";
-            MessageBoxA(
-                HWND(std::ptr::null_mut()),
-                PCSTR(error_msg.as_ptr()),
-                PCSTR(title.as_ptr()),
-                MB_OK | MB_ICONERROR,
-            );
+            display_message_box(&error_msg, None);
             exit(1);
         }
         if let Err(e) = CloseHandle(pi.hThread) {
             let error_msg = format!("Failed to close thread handle: {:?}", e);
-            let title = "Error";
-            MessageBoxA(
-                HWND(std::ptr::null_mut()),
-                PCSTR(error_msg.as_ptr()),
-                PCSTR(title.as_ptr()),
-                MB_OK | MB_ICONERROR,
-            );
+            display_message_box(&error_msg, None);
             exit(1);
         }
     }
